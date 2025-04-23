@@ -1,0 +1,219 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Income Expense Calculator</title>
+</head>
+<body class="bg-gradient-to-r from-blue-300 to-green-300 min-h-screen p-6">
+
+  <header class="text-3xl font-bold text-center text-blue-800 mb-6">
+    INCOME EXPENSE CALCULATOR
+  </header>
+
+  <div class="max-w-3xl mx-auto space-y-6">
+
+    <!-- Totals -->
+    <div class="bg-blue-500 p-4 rounded-lg text-white grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+      <h2 id="t-income">Total Income: ₹0</h2>
+      <h2 id="t-expense">Total Expense: ₹0</h2>
+      <h2 id="balance">Net Balance: ₹0</h2>
+    </div>
+
+    <!-- Add Transaction -->
+    <div class="bg-green-200 p-6 rounded-lg grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div>
+        <label class="block text-gray-700">Description</label>
+        <input type="text" id="description" class="w-full rounded border p-2" placeholder="e.g. Salary" />
+      </div>
+      <div>
+        <label class="block text-gray-700">Amount</label>
+        <input type="number" id="amount_for" class="w-full rounded border p-2" placeholder="e.g. 1000" />
+      </div>
+      <div>
+        <label class="block text-gray-700">Type</label>
+        <select id="expo" class="w-full rounded border p-2">
+          <option value="income">Income</option>
+          <option value="expense">Expense</option>
+        </select>
+      </div>
+      <div class="flex items-end">
+        <button id="add_transaction" class="w-full bg-green-500 text-white p-2 rounded">Add Transaction</button>
+      </div>
+    </div>
+
+    <!-- Filter Buttons -->
+    <div class="bg-violet-300 p-4 rounded grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+      <button id="all_transaction" class="bg-violet-500 text-white p-2 rounded">All Transactions</button>
+      <button id="incomet" class="bg-rose-400 p-2 rounded">Income</button>
+      <button id="expense" class="bg-purple-700 text-white p-2 rounded">Expense</button>
+    </div>
+
+    <!-- Transaction List -->
+    <div>
+      <ul id="transaction_list" class="bg-blue-100 p-4 rounded space-y-2">
+        <li class="text-xl font-semibold text-center">Transactions</li>
+      </ul>
+    </div>
+
+    <!-- Reset -->
+    <div class="text-center">
+      <button id="reset" class="bg-red-400 text-white px-4 py-2 rounded">Clear All</button>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    const description = document.getElementById("description");
+    const amount = document.getElementById("amount_for");
+    const type = document.getElementById("expo");
+    const addTransactionBtn = document.getElementById("add_transaction");
+
+    const incomeEl = document.getElementById("t-income");
+    const expenseEl = document.getElementById("t-expense");
+    const balanceEl = document.getElementById("balance");
+    const transactionList = document.getElementById("transaction_list");
+
+    const allBtn = document.getElementById("all_transaction");
+    const incomeBtn = document.getElementById("incomet");
+    const expenseBtn = document.getElementById("expense");
+    const resetBtn = document.getElementById("reset");
+
+    let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
+
+    function updateUI(filter = "all") {
+      transactionList.innerHTML = '<li class="text-xl font-semibold text-center">Transactions</li>';
+
+      let totalIncome = 0;
+      let totalExpense = 0;
+
+      const filtered = filter === "all"
+        ? transactions
+        : transactions.filter(tx => tx.type === filter);
+
+      filtered.forEach(tx => {
+        const li = document.createElement("li");
+        li.className = "bg-white p-2 rounded shadow";
+        li.textContent = `${tx.description}: ₹${tx.amount}`;
+        transactionList.appendChild(li);
+      });
+
+      transactions.forEach(tx => {
+        if (tx.type === "income") totalIncome += tx.amount;
+        else totalExpense += tx.amount;
+      });
+
+      incomeEl.textContent = `Total Income: ₹${totalIncome}`;
+      expenseEl.textContent = `Total Expense: ₹${totalExpense}`;
+      balanceEl.textContent = `Net Balance: ₹${totalIncome - totalExpense}`;
+    }
+
+    addTransactionBtn.addEventListener("click", () => {
+      const desc = description.value.trim();
+      const amt = parseFloat(amount.value);
+
+      if (!desc || isNaN(amt)) {
+        alert("Please enter valid description and amount.");
+        return;
+      }
+
+      const transaction = {
+        description: desc,
+        amount: amt,
+        type: type.value
+      };
+
+      transactions.push(transaction);
+      localStorage.setItem("transactions", JSON.stringify(transactions));
+
+      description.value = "";
+      amount.value = "";
+
+      updateUI();
+    });
+
+    allBtn.addEventListener("click", () => updateUI("all"));
+    incomeBtn.addEventListener("click", () => updateUI("income"));
+    expenseBtn.addEventListener("click", () => updateUI("expense"));
+
+    resetBtn.addEventListener("click", () => {
+      if (confirm("Are you sure you want to clear all transactions?")) {
+        transactions = [];
+        localStorage.removeItem("transactions");
+        updateUI();
+      }
+    });
+    function updateUI(filter = "all") {
+  transactionList.innerHTML = '<li class="text-xl font-semibold text-center">Transactions</li>';
+
+  let totalIncome = 0;
+  let totalExpense = 0;
+
+  const filtered = filter === "all"
+    ? transactions
+    : transactions.filter(tx => tx.type === filter);
+
+  filtered.forEach((tx, index) => {
+    const li = document.createElement("li");
+    li.className = "bg-white p-2 rounded shadow flex justify-between items-center";
+
+    li.innerHTML = `
+      <span>${tx.description}: ₹${tx.amount}</span>
+      <div class="space-x-2">
+        <button class="edit-btn bg-yellow-400 text-white px-2 py-1 rounded" data-index="${index}">Edit</button>
+        <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded" data-index="${index}">Delete</button>
+      </div>
+    `;
+
+    transactionList.appendChild(li);
+  });
+
+  transactions.forEach(tx => {
+    if (tx.type === "income") totalIncome += tx.amount;
+    else totalExpense += tx.amount;
+  });
+
+  incomeEl.textContent = `Total Income: ₹${totalIncome}`;
+  expenseEl.textContent = `Total Expense: ₹${totalExpense}`;
+  balanceEl.textContent = `Net Balance: ₹${totalIncome - totalExpense}`;
+
+  // Delete functionality
+  document.querySelectorAll(".delete-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const index = e.target.getAttribute("data-index");
+      transactions.splice(index, 1);
+      localStorage.setItem("transactions", JSON.stringify(transactions));
+      updateUI(filter); // Re-render with same filter
+    });
+  });
+
+  // Edit functionality
+  document.querySelectorAll(".edit-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const index = e.target.getAttribute("data-index");
+      const tx = filtered[index]; // Index relative to filtered list
+      const globalIndex = transactions.findIndex(t => t.description === tx.description && t.amount === tx.amount && t.type === tx.type);
+
+      // Prefill the form
+      description.value = tx.description;
+      amount.value = tx.amount;
+      type.value = tx.type;
+
+      // Remove original transaction temporarily
+      if (globalIndex !== -1) {
+        transactions.splice(globalIndex, 1);
+        localStorage.setItem("transactions", JSON.stringify(transactions));
+        updateUI(filter);
+      }
+    });
+  });
+}
+
+
+
+      
+  </script>
+</body>
+</html>
+
